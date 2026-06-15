@@ -36,7 +36,7 @@ def bisseccao(func, a, b, tol=1e-8, max_iter=1000):
     fa, fb = float(func(a)), float(func(b))
     if np.abs(fa) < tol: return a, 0
     if np.abs(fb) < tol: return b, 0
-    if fa * fb > 0: raise ValueError("f(a) e f(b) devem ter sinais opostos.")
+    if fa * fb > 0: raise ValueError("f(a) e f(b) devem ter sinais opostos no intervalo escolhido.")
     for i in range(1, max_iter + 1):
         c = (a + b) / 2
         fc = float(func(c))
@@ -50,7 +50,6 @@ def gerar_grafico(func, derivada, a, b, raiz):
     y_raiz = float(func(raiz))
     m_tang = float(derivada(raiz))
     
-    # Domínio focado no intervalo do usuário com uma pequena margem
     largura = max(b - a, 1.0)
     x_inicio = a - largura * 0.1
     x_fim = b + largura * 0.1
@@ -63,14 +62,11 @@ def gerar_grafico(func, derivada, a, b, raiz):
     fig, ax = plt.subplots(figsize=(9, 5.5), facecolor='#0f172a')
     ax.set_facecolor('#1e293b')
 
-    # Curva Principal
     ax.plot(x, y, color='#38bdf8', lw=3, label="f(x)")
     
-    # Reta Tangente
     y_tan = m_tang * (x - raiz) + y_raiz
     ax.plot(x, y_tan, "--", color='#4ade80', lw=2, label="Reta Tangente")
 
-    # Reta Normal Ortogonal à Tangente
     if abs(m_tang) > 1e-10:
         m_norm = -1/m_tang
         y_norm = m_norm * (x - raiz) + y_raiz
@@ -82,7 +78,6 @@ def gerar_grafico(func, derivada, a, b, raiz):
     ax.axvline(0, color='#475569', lw=1, alpha=0.5)
     ax.plot(raiz, y_raiz, "o", color='#facc15', ms=10, label=f"Raiz: {raiz:.4f}")
     
-    # Escala Dinâmica Vertical Baseada nos Limites Reais
     y_lims = y[(x >= a) & (x <= b) & (~np.isnan(y))]
     if len(y_lims) > 0:
         folga = max(abs(max(y_lims) - min(y_lims)) * 0.2, 1.0)
@@ -118,20 +113,23 @@ def index():
             y0 = float(f_num(raiz))
             m = float(d_num(raiz))
             
-            # Montagem matemática das equações lineares para exibição
-            sinal_y0 = "+" if y0 >= 0 else "-"
-            eq_t = f"y = {m:.4f}(x - {raiz:.4f}) {sinal_y0} {abs(y0):.4f}"
-            
-            if abs(m) < 1e-10:
-                eq_n = f"x = {raiz:.4f} (Reta Vertical)"
+            # Formatação estrutural condicional para ocultar resíduos próximos de zero
+            if abs(y0) < 1e-4:
+                eq_t = f"y = {m:.4f}(x - {raiz:.4f})"
+                if abs(m) < 1e-10:
+                    eq_n = f"x = {raiz:.4f}"
+                else:
+                    eq_n = f"y = {-1/m:.4f}(x - {raiz:.4f})"
             else:
-                m_n = -1/m
-                sinal_norm = "+" if y0 >= 0 else "-"
-                eq_n = f"y = {m_n:.4f}(x - {raiz:.4f}) {sinal_norm} {abs(y0):.4f}"
+                sinal_y0 = "+" if y0 >= 0 else "-"
+                eq_t = f"y = {m:.4f}(x - {raiz:.4f}) {sinal_y0} {abs(y0):.4f}"
+                if abs(m) < 1e-10:
+                    eq_n = f"x = {raiz:.4f}"
+                else:
+                    eq_n = f"y = {-1/m:.4f}(x - {raiz:.4f}) {sinal_y0} {abs(y0):.4f}"
             
             gerar_grafico(f_num, d_num, a, b, raiz)
             
-            # ATENÇÃO: Nomes exatos mapeados para o front-end
             res = {
                 "exp_original": exp,
                 "f_formatada": sp.sstr(f_simb),
@@ -143,8 +141,13 @@ def index():
                 "eq_normal": eq_n,
                 "grafico_url": "/static/images/grafico.png"
             }
-        except Exception as e: 
+        except (sp.sympify.SympifyError, TypeError, SyntaxError, NameError):
+            # Intercepta erros estruturais da equação matemática digitada pelo usuário
+            erro = "Erro de digitação, digite a função novamente."
+        except Exception as e:
+            # Mantém outros erros matemáticos operacionais (como f(a) e f(b) sem inversão de sinal)
             erro = str(e)
+            
     return render_template('index.html', res=res, erro=erro)
 
 if __name__ == '__main__':
