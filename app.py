@@ -113,7 +113,7 @@ def index():
             y0 = float(f_num(raiz))
             m = float(d_num(raiz))
             
-            # Formatação estrutural condicional para ocultar resíduos próximos de zero
+           
             if abs(y0) < 1e-4:
                 eq_t = f"y = {m:.4f}(x - {raiz:.4f})"
                 if abs(m) < 1e-10:
@@ -142,10 +142,10 @@ def index():
                 "grafico_url": "/static/images/grafico.png"
             }
         except (sp.sympify.SympifyError, TypeError, SyntaxError, NameError):
-            # Intercepta erros estruturais da equação matemática digitada pelo usuário
+            
             erro = "Erro de digitação, digite a função novamente."
         except Exception as e:
-            # Mantém outros erros matemáticos operacionais (como f(a) e f(b) sem inversão de sinal)
+            
             erro = str(e)
             
     return render_template('index.html', res=res, erro=erro)
