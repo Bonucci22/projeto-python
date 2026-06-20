@@ -141,11 +141,20 @@ def index():
                 "eq_normal": eq_n,
                 "grafico_url": "/static/images/grafico.png"
             }
+       
+        
         except (sp.sympify.SympifyError, TypeError, SyntaxError, NameError):
-            
             erro = "Erro de digitação, digite a função novamente."
-        except Exception as e:
             
+        except ValueError as e:
+            
+            msg = str(e)
+            if "math domain error" in msg or "invalid value" in msg or "log" in msg:
+                erro = "Erro matemático: O intervalo escolhido está fora do domínio da função (ex: logaritmo de número <= 0)."
+            else:
+                erro = msg
+                
+        except Exception as e:
             erro = str(e)
             
     return render_template('index.html', res=res, erro=erro)
